@@ -236,11 +236,13 @@ class OutlookCalendar
     public function getEventsForDate($access_token, \DateTime $date)
     {
         // Set the start of our view window to midnight of the specified day.
-        $windowStart = $date->setTime(0, 0, 0);
+        $windowStart = clone $date;
+        $windowStart->setTime(0, 0, 0);
         $windowStartUrl = $windowStart->format('Y-m-d\TH:i:s');
 
         // Add one day to the window start time to get the window end.
-        $windowEnd = $windowStart->add(new \DateInterval("P1D"));
+        $windowEnd = clone $windowStart;
+        $windowEnd->setTime(23, 59, 59);
         $windowEndUrl = $windowEnd->format('Y-m-d\TH:i:s');
 
         // Build the API request URL
