@@ -13,273 +13,346 @@ class OutlookCalendar
     /**
      * @var string
      */
-    protected $applicationName;
+    protected $clientId;
 
     /**
      * @var string
      */
-    protected $credentialsPath;
+    protected $clientSecret;
 
     /**
      * @var string
      */
-    protected $clientSecretPath;
+    protected $authority = "https://login.microsoftonline.com";
 
     /**
      * @var string
      */
-    protected $scopes;
+    protected $authorizeUrl = '/common/oauth2/v2.0/authorize?client_id=%1$s&redirect_uri=%2$s&scope=%3$s&response_type=code';
 
     /**
      * @var string
      */
-    protected $redirectUri;
+    protected $tokenUrl = "/common/oauth2/v2.0/token";
 
     /**
-     * construct
+     * @var string
      */
-    public function __construct()
+    protected $logoutUrl = '/common/oauth2/logout?post_logout_redirect_uri=%1$s';
+
+    /**
+     * @var string
+     */
+    protected $outlookApiUrl = "https://outlook.office.com/api/v2.0";
+
+    /**
+     * @var string
+     */
+    protected $scopes = "openid https://outlook.office.com/calendars.read";
+
+    /**
+     * Set this to true to enable Fiddler capture.
+     * Note that if you have this set to true and you are not running Fiddler
+     * on the web server, requests will silently fail.
+     *
+     * @var bool
+     */
+    protected $enableFiddler = false;
+
+    /**
+     * @param string $clientId
+     */
+    public function setClientId($clientId)
     {
-        $this->scopes = implode(' ', [\Outlook_Service_Calendar::CALENDAR_READONLY]);
+        $this->clientId = $clientId;
     }
 
     /**
-     * @param $applicationName
+     * @param string $clientSecret
      */
-    public function setApplicationName($applicationName)
+    public function setClientSecret($clientSecret)
     {
-        $this->applicationName = $applicationName;
+        $this->clientSecret = $clientSecret;
     }
 
     /**
-     * @param $credentialsPath
-     */
-    public function setCredentialsPath($credentialsPath)
-    {
-        $this->credentialsPath = $credentialsPath;
-    }
-
-    /**
-     * @param $clientSecretPath
-     */
-    public function setClientSecretPath($clientSecretPath)
-    {
-        $this->clientSecretPath = $clientSecretPath;
-    }
-
-    /**
+     * Builds a login URL based on the client ID and redirect URI
+     *
      * @param $redirectUri
+     * @return string
      */
-    public function setRedirectUri($redirectUri)
+    public function getLoginUrl($redirectUri)
     {
-        $this->redirectUri = $redirectUri;
+        $loginUrl = $this->authority . sprintf($this->authorizeUrl, $this->clientId, urlencode($redirectUri), urlencode($this->scopes));
+        return $loginUrl;
     }
 
     /**
-     * @param null $authCode
-     * @return \Outlook_Client|string
+     * Builds a logout URL based on the redirect URI.
+     *
+     * @param $redirectUri
+     * @return string
      */
-    public function getClient($authCode = null)
+    public function getLogoutUrl($redirectUri)
     {
-        $client = new \Outlook_Client();
-        $client->setApplicationName($this->applicationName);
-        $client->setScopes($this->scopes);
-        $client->setAuthConfig($this->clientSecretPath);
-        $client->setAccessType('offline');
-
-        // Load previously authorized credentials from a file.
-        $credentialsPath = $this->credentialsPath;
-        if (file_exists($credentialsPath)) {
-            $accessToken = json_decode(file_get_contents($credentialsPath), true);
-        } else {
-            // Request authorization from the user.
-            if ($this->redirectUri) {
-                $client->setRedirectUri($this->redirectUri);
-            }
-
-            if ($authCode != null) {
-                $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
-
-                if (!file_exists(dirname($credentialsPath))) {
-                    mkdir(dirname($credentialsPath), 0700, true);
-                }
-                file_put_contents($credentialsPath, json_encode($accessToken));
-            } else {
-                return $client->createAuthUrl();
-            }
-        }
-        $client->setAccessToken($accessToken);
-
-        // Refresh the token if it's expired.
-        if ($client->isAccessTokenExpired()) {
-            $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-            file_put_contents($credentialsPath, json_encode($client->getAccessToken()));
-        }
-        return $client;
+        $logoutUrl = $this->authority . sprintf($this->logoutUrl, urlencode($redirectUri));
+        return $logoutUrl;
     }
 
     /**
-     * Add an Event to the specified calendar
+     * Sends a request to the token endpoint to exchange an auth code
+     * for an access token.
      *
-     * @param string $calendarId Calendar's ID in which you want to insert your event
-     * @param \DateTime $eventStart Event's start date
-     * @param \DateTime $eventEnd Event's end date
-     * @param string $eventSummary Event's title
-     * @param string $eventDescription Event's description where you should put all your informations
-     * @param array $eventAttendee Event's attendees : to use the invitation system you should add the calendar owner to the attendees
-     * @param array $optionalParams Optional params
-     *
-     * @return object Event
+     * @param $authCode
+     * @param $redirectUri
+     * @return array|mixed
      */
-    public function addEvent(
-        $calendarId,
-        $eventStart,
-        $eventEnd,
-        $eventSummary,
-        $eventDescription,
-        $eventAttendee,
-        $optionalParams = []
-    )
+    public function getTokenFromAuthCode($authCode, $redirectUri)
     {
-        // Your new OutlookEvent object
-        $event = new \Outlook_Service_Calendar_Event();
-        // Set the title
-        $event->setSummary($eventSummary);
-        // Set and format the start date
-        $formattedStart = $eventStart->format(\DateTime::RFC3339);
-        $formattedEnd = $eventEnd->format(\DateTime::RFC3339);
-        $start = new \Outlook_Service_Calendar_EventDateTime();
-        $start->setDateTime($formattedStart);
-        $event->setStart($start);
-        $end = new \Outlook_Service_Calendar_EventDateTime();
-        $end->setDateTime($formattedEnd);
-        $event->setEnd($end);
-        // Default status for newly created event
-        $event->setStatus('tentative');
-        // Set event's description
-        $event->setDescription($eventDescription);
-        // Attendees - permit to manage the event's status
-        $attendee = new \Outlook_Service_Calendar_EventAttendee();
-        $attendee->setEmail($eventAttendee);
-        $event->attendees = [$attendee];
-        // Event insert
-        return $this->getCalendarService()->events->insert($calendarId, $event, $optionalParams);
-    }
-
-    /**
-     * Retrieve modified events from a Outlook push notification
-     *
-     * @param string $calendarId
-     * @param string $syncToken Synchronised Token to retrieve last changes
-     *
-     * @return object
-     */
-    public function getEvents($calendarId, $syncToken)
-    {
-        // Option array
-        $optParams = [];
-        return $this->getCalendarService()->events->listEvents($calendarId, $optParams);
-    }
-
-    /**
-     * Init a full list of events
-     *
-     * @param string $calendarId
-     *
-     * @return object
-     */
-    public function initEventsList($calendarId)
-    {
-        $eventsList = $this->getCalendarService()->events->listEvents($calendarId);
-        return $eventsList->getItems();
-    }
-
-    /**
-     * Delete an event
-     *
-     * @param string $calendarId
-     * @param string $eventId
-     */
-    public function deleteEvent($calendarId, $eventId)
-    {
-        $this->getCalendarService()->events->delete($calendarId, $eventId);
-    }
-
-    /**
-     * Update an event
-     *
-     * @param string $calendarId
-     * @param \Outlook_Service_Calendar_Event $event
-     */
-    public function updateEvent($calendarId, $event)
-    {
-        $this->getCalendarService()->events->update($calendarId, $event->getId(), $event);
-    }
-
-    /**
-     * List shared and available calendars
-     *
-     * @return object
-     */
-    public function listCalendars()
-    {
-        return $this->getCalendarService()->calendarList->listCalendarList();
-    }
-
-    /**
-     * Retrieve Outlook events on a date range
-     *
-     * @param string $calendarId
-     * @param \DateTime $start Range start
-     * @param \DateTime $end Range end
-     *
-     * @return object
-     */
-    public function getEventsOnRange($calendarId, \Datetime $start, \Datetime $end)
-    {
-        $service = $this->getCalendarService();
-
-        $timeMin = $start->format(\DateTime::RFC3339);
-        $timeMax = $end->format(\DateTime::RFC3339);
-
-        // Params to send to Outlook
-        $eventOptions = array(
-            'orderBy' => 'startTime',
-            'singleEvents' => true,
-            'timeMin' => $timeMin,
-            'timeMax' => $timeMax
+        // Build the form data to post to the OAuth2 token endpoint
+        $token_request_data = array(
+            "grant_type" => "authorization_code",
+            "code" => $authCode,
+            "redirect_uri" => $redirectUri,
+            "client_id" => $this->clientId,
+            "client_secret" => $this->clientSecret,
+            "scope" => $this->scopes
         );
-        $eventList = $service->events->listEvents($calendarId, $eventOptions);
-        return $eventList;
+
+        // Calling http_build_query is important to get the data
+        // formatted as Azure expects.
+        $token_request_body = http_build_query($token_request_data);
+
+        $curl = curl_init($this->authority . $this->tokenUrl);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $token_request_body);
+
+        if ($this->enableFiddler) {
+            // ENABLE FIDDLER TRACE
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+            // SET PROXY TO FIDDLER PROXY
+            curl_setopt($curl, CURLOPT_PROXY, "127.0.0.1:8888");
+        }
+
+        $response = curl_exec($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        if ($this->isFailure($httpCode)) {
+            return array(
+                'errorNumber' => $httpCode,
+                'error' => 'Token request returned HTTP error ' . $httpCode
+            );
+        }
+
+        // Check error
+        $curl_errno = curl_errno($curl);
+        $curl_err = curl_error($curl);
+        if ($curl_errno) {
+            $msg = $curl_errno . ": " . $curl_err;
+            return array(
+                'errorNumber' => $curl_errno,
+                'error' => $msg
+            );
+        }
+
+        curl_close($curl);
+        // The response is a JSON payload, so decode it into
+        // an array.
+        $json_vals = json_decode($response, true);
+        return $json_vals;
     }
 
     /**
-     * Retrieve Outlook events filtered by parameters
+     * Sends a request to the token endpoint to get a new access token
+     * from a refresh token.
      *
-     * @param string $calendarId
-     * @param array $eventOptions
-     *
-     * @return object
+     * @param $refreshToken
+     * @return array|mixed
      */
-    public function getEventsByParams($calendarId, $eventOptions)
+    public function getTokenFromRefreshToken($refreshToken)
     {
-        $service = $this->getCalendarService();
-        foreach (['timeMin', 'timeMax', 'updatedMin'] as $opt) {
-            if (isset($eventOptions[$opt])) $eventOptions[$opt] = $eventOptions[$opt]->format(\DateTime::RFC3339);
+        // Build the form data to post to the OAuth2 token endpoint
+        $token_request_data = array(
+            "grant_type" => "refresh_token",
+            "refresh_token" => $refreshToken,
+            "client_id" => $this->clientId,
+            "client_secret" => $this->clientSecret
+        );
+
+        $token_request_body = http_build_query($token_request_data);
+
+        $curl = curl_init($this->authority . $this->tokenUrl);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $token_request_body);
+
+        if ($this->enableFiddler) {
+            // ENABLE FIDDLER TRACE
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
+            // SET PROXY TO FIDDLER PROXY
+            curl_setopt($curl, CURLOPT_PROXY, "127.0.0.1:8888");
         }
-        $eventList = $service->events->listEvents($calendarId, $eventOptions);
-        return $eventList;
+
+        $response = curl_exec($curl);
+
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        if ($this->isFailure($httpCode)) {
+            return array(
+                'errorNumber' => $httpCode,
+                'error' => 'Token request returned HTTP error ' . $httpCode
+            );
+        }
+
+        // Check error
+        $curl_errno = curl_errno($curl);
+        $curl_err = curl_error($curl);
+        if ($curl_errno) {
+            $msg = $curl_errno . ": " . $curl_err;
+            return array(
+                'errorNumber' => $curl_errno,
+                'error' => $msg
+            );
+        }
+
+        curl_close($curl);
+
+        // The response is a JSON payload, so decode it into
+        // an array.
+        $json_vals = json_decode($response, true);
+
+        return $json_vals;
     }
 
     /**
-     * @return \Outlook_Service_Calendar|null
+     * Uses the Calendar API's CalendarView to get all events
+     * on a specific day. CalendarView handles expansion of recurring items.
+     *
+     * @param $access_token
+     * @param \DateTime $date
+     * @return array|mixed
      */
-    public function getCalendarService()
+    public function getEventsForDate($access_token, \DateTime $date)
     {
-        $client = $this->getClient();
-        if (!is_string($client)) {
-            return new \Outlook_Service_Calendar($this->getClient());
+        // Set the start of our view window to midnight of the specified day.
+        $windowStart = $date->setTime(0, 0, 0);
+        $windowStartUrl = $windowStart->format('Y-m-d\TH:i:s');
+
+        // Add one day to the window start time to get the window end.
+        $windowEnd = $windowStart->add(new \DateInterval("P1D"));
+        $windowEndUrl = $windowEnd->format('Y-m-d\TH:i:s');
+
+        // Build the API request URL
+        $calendarViewUrl = $this->outlookApiUrl . "/me/calendarview?"
+            . "startDateTime=" . $windowStartUrl
+            . "&endDateTime=" . $windowEndUrl
+            . '&$select=Subject,Start,End,Location';
+
+        return $this->makeApiCall($access_token, "GET", $calendarViewUrl);
+    }
+
+    /**
+     * Make an API call.
+     *
+     * @param $access_token
+     * @param $method
+     * @param $url
+     * @param null $payload
+     * @return array|mixed
+     * @throws \Exception
+     */
+    public function makeApiCall($access_token, $method, $url, $payload = NULL)
+    {
+        // Generate the list of headers to always send.
+        $headers = array(
+            "User-Agent: php-tutorial/1.0",         // Sending a User-Agent header is a best practice.
+            "Authorization: Bearer " . $access_token, // Always need our auth token!
+            "Accept: application/json",             // Always accept JSON response.
+            "client-request-id: " . $this->makeGuid(), // Stamp each new request with a new GUID.
+            "return-client-request-id: true",       // Tell the server to include our request-id GUID in the response
+        );
+
+        $curl = curl_init($url);
+
+        switch (strtoupper($method)) {
+            case "GET":
+                // Nothing to do, GET is the default and needs no
+                // extra headers.
+                break;
+            case "POST":
+                // Add a Content-Type header (IMPORTANT!)
+                $headers[] = "Content-Type: application/json";
+                curl_setopt($curl, CURLOPT_POST, true);
+                curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
+                break;
+            case "PATCH":
+                // Add a Content-Type header (IMPORTANT!)
+                $headers[] = "Content-Type: application/json";
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PATCH");
+                curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
+                break;
+            case "DELETE":
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+                break;
+            default:
+                throw new \Exception("INVALID METHOD: " . $method);
         }
-        return null;
+
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+        $response = curl_exec($curl);
+
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        if ($httpCode >= 400) {
+            return array('errorNumber' => $httpCode,
+                'error' => 'Request returned HTTP error ' . $httpCode);
+        }
+
+        $curl_errno = curl_errno($curl);
+        $curl_err = curl_error($curl);
+
+        if ($curl_errno) {
+            $msg = $curl_errno . ": " . $curl_err;
+            curl_close($curl);
+            return array('errorNumber' => $curl_errno,
+                'error' => $msg);
+        } else {
+            curl_close($curl);
+            return json_decode($response, true);
+        }
+    }
+
+    /**
+     * This function generates a random GUID.
+     *
+     * @return string
+     */
+    public function makeGuid()
+    {
+        if (function_exists('com_create_guid')) {
+            return strtolower(trim(com_create_guid(), '{}'));
+        } else {
+            $charid = strtolower(md5(uniqid(rand(), true)));
+            $hyphen = chr(45);
+            $uuid = substr($charid, 0, 8) . $hyphen
+                . substr($charid, 8, 4) . $hyphen
+                . substr($charid, 12, 4) . $hyphen
+                . substr($charid, 16, 4) . $hyphen
+                . substr($charid, 20, 12);
+
+            return $uuid;
+        }
+    }
+
+    /**
+     * @param $httpStatus
+     * @return bool
+     */
+    public function isFailure($httpStatus)
+    {
+        // Simplistic check for failure HTTP status
+        return ($httpStatus >= 400);
     }
 }

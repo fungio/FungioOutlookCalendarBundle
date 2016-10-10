@@ -7,12 +7,12 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 
 /**
- * Class FungioPutlookCalendarExtension
+ * Class FungioOutlookCalendarExtension
  * @package Fungio\OutlookCalendarBundle\DependencyInjection
  *
  * @author Pierrick AUBIN <pierrick.aubin@siqual.fr>
  */
-class FungioPutlookCalendarExtension extends Extension
+class FungioOutlookCalendarExtension extends Extension
 {
     /**
      * {@inheritdoc}
@@ -25,17 +25,13 @@ class FungioPutlookCalendarExtension extends Extension
 
         if ($container->hasDefinition('fungio.outlook_calendar')) {
             $definition = $container->getDefinition('fungio.outlook_calendar');
-            if (isset($config['outlook_calendar']['application_name'])) {
+            if (isset($config['outlook_calendar']['client_id'])) {
                 $definition
-                    ->addMethodCall('setApplicationName', [$config['outlook_calendar']['application_name']]);
+                    ->addMethodCall('setClientId', [$config['outlook_calendar']['client_id']]);
             }
-            if (isset($config['outlook_calendar']['credentials_path'])) {
+            if (isset($config['outlook_calendar']['client_secret'])) {
                 $definition
-                    ->addMethodCall('setCredentialsPath', [$config['outlook_calendar']['credentials_path']]);
-            }
-            if (isset($config['outlook_calendar']['client_secret_path'])) {
-                $definition
-                    ->addMethodCall('setClientSecretPath', [$config['outlook_calendar']['client_secret_path']]);
+                    ->addMethodCall('setClientSecret', [$config['outlook_calendar']['client_secret']]);
             }
         }
 
