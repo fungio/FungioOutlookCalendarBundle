@@ -110,14 +110,14 @@ class OutlookCalendar
     public function getTokenFromAuthCode($authCode, $redirectUri)
     {
         // Build the form data to post to the OAuth2 token endpoint
-        $token_request_data = array(
+        $token_request_data = [
             "grant_type" => "authorization_code",
             "code" => $authCode,
             "redirect_uri" => $redirectUri,
             "client_id" => $this->clientId,
             "client_secret" => $this->clientSecret,
             "scope" => $this->scopes
-        );
+        ];
 
         // Calling http_build_query is important to get the data
         // formatted as Azure expects.
@@ -139,10 +139,10 @@ class OutlookCalendar
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         if ($this->isFailure($httpCode)) {
-            return array(
+            return [
                 'errorNumber' => $httpCode,
                 'error' => 'Token request returned HTTP error ' . $httpCode
-            );
+            ];
         }
 
         // Check error
@@ -150,10 +150,10 @@ class OutlookCalendar
         $curl_err = curl_error($curl);
         if ($curl_errno) {
             $msg = $curl_errno . ": " . $curl_err;
-            return array(
+            return [
                 'errorNumber' => $curl_errno,
                 'error' => $msg
-            );
+            ];
         }
 
         curl_close($curl);
@@ -173,12 +173,12 @@ class OutlookCalendar
     public function getTokenFromRefreshToken($refreshToken)
     {
         // Build the form data to post to the OAuth2 token endpoint
-        $token_request_data = array(
+        $token_request_data = [
             "grant_type" => "refresh_token",
             "refresh_token" => $refreshToken,
             "client_id" => $this->clientId,
             "client_secret" => $this->clientSecret
-        );
+        ];
 
         $token_request_body = http_build_query($token_request_data);
 
@@ -199,10 +199,10 @@ class OutlookCalendar
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         if ($this->isFailure($httpCode)) {
-            return array(
+            return [
                 'errorNumber' => $httpCode,
                 'error' => 'Token request returned HTTP error ' . $httpCode
-            );
+            ];
         }
 
         // Check error
@@ -210,10 +210,10 @@ class OutlookCalendar
         $curl_err = curl_error($curl);
         if ($curl_errno) {
             $msg = $curl_errno . ": " . $curl_err;
-            return array(
+            return [
                 'errorNumber' => $curl_errno,
                 'error' => $msg
-            );
+            ];
         }
 
         curl_close($curl);
@@ -267,13 +267,13 @@ class OutlookCalendar
     public function makeApiCall($access_token, $method, $url, $payload = NULL)
     {
         // Generate the list of headers to always send.
-        $headers = array(
+        $headers = [
             "User-Agent: php-tutorial/1.0",         // Sending a User-Agent header is a best practice.
             "Authorization: Bearer " . $access_token, // Always need our auth token!
             "Accept: application/json",             // Always accept JSON response.
             "client-request-id: " . $this->makeGuid(), // Stamp each new request with a new GUID.
             "return-client-request-id: true",       // Tell the server to include our request-id GUID in the response
-        );
+        ];
 
         $curl = curl_init($url);
 
@@ -308,8 +308,10 @@ class OutlookCalendar
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         if ($httpCode >= 400) {
-            return array('errorNumber' => $httpCode,
-                'error' => 'Request returned HTTP error ' . $httpCode);
+            return [
+                'errorNumber' => $httpCode,
+                'error' => 'Request returned HTTP error ' . $httpCode
+            ];
         }
 
         $curl_errno = curl_errno($curl);
@@ -318,8 +320,10 @@ class OutlookCalendar
         if ($curl_errno) {
             $msg = $curl_errno . ": " . $curl_err;
             curl_close($curl);
-            return array('errorNumber' => $curl_errno,
-                'error' => $msg);
+            return [
+                'errorNumber' => $curl_errno,
+                'error' => $msg
+            ];
         } else {
             curl_close($curl);
             return json_decode($response, true);
