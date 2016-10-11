@@ -48,7 +48,7 @@ class OutlookCalendar
     /**
      * @var string
      */
-    protected $scopes = "openid https://outlook.office.com/calendars.read";
+    protected $scopes = "openid https://outlook.office.com/calendars.readwrite";
 
     /**
      * Set this to true to enable Fiddler capture.
@@ -226,6 +226,20 @@ class OutlookCalendar
     }
 
     /**
+     * @param $access_token
+     * @param $eventId
+     * @param $params
+     * @return array|mixed
+     * @throws \Exception
+     */
+    public function updateEvent($access_token, $eventId, $params)
+    {
+        $calendarViewUrl = $this->outlookApiUrl . "/me/events/" . $eventId;
+
+        return $this->makeApiCall($access_token, "PATCH", $calendarViewUrl, $params);
+    }
+
+    /**
      * Uses the Calendar API's CalendarView to get all events
      * on a specific day. CalendarView handles expansion of recurring items.
      *
@@ -350,6 +364,19 @@ class OutlookCalendar
 
             return $uuid;
         }
+    }
+
+    /**
+     * @param $access_token
+     * @return bool
+     */
+    public function isConnected($access_token)
+    {
+        $events = $this->getEventsForDate($access_token, new \DateTime('now'));
+        if (array_key_exists('error', $events)) {
+            return false;
+        }
+        return true;
     }
 
     /**
