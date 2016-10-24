@@ -28,7 +28,7 @@ class OutlookCalendar
     /**
      * @var string
      */
-    protected $authorizeUrl = '/common/oauth2/v2.0/authorize?client_id=%1$s&redirect_uri=%2$s&scope=%3$s&response_type=code';
+    protected $authorizeUrl = '/common/oauth2/v2.0/authorize?client_id=%1$s&redirect_uri=%2$s&state=%3$s&scope=%4$s&response_type=code';
 
     /**
      * @var string
@@ -48,7 +48,12 @@ class OutlookCalendar
     /**
      * @var string
      */
-    protected $scopes = "openid https://outlook.office.com/calendars.readwrite";
+    protected $scopes = "openid https://outlook.office.com/calendars.readwrite offline_access";
+
+    /**
+     * @var array
+     */
+    protected $parameters = [];
 
     /**
      * Set this to true to enable Fiddler capture.
@@ -76,6 +81,32 @@ class OutlookCalendar
     }
 
     /**
+     * @param $parameters
+     */
+    public function setParameters($parameters)
+    {
+        $this->parameters = $parameters;
+    }
+
+    /**
+     * @param $inputStr
+     * @return string
+     */
+    public static function base64UrlEncode($inputStr)
+    {
+        return strtr(base64_encode($inputStr), '+/=', '-_,');
+    }
+
+    /**
+     * @param $inputStr
+     * @return string
+     */
+    public static function base64UrlDecode($inputStr)
+    {
+        return base64_decode(strtr($inputStr, '-_,', '+/='));
+    }
+
+    /**
      * Builds a login URL based on the client ID and redirect URI
      *
      * @param $redirectUri
@@ -83,7 +114,7 @@ class OutlookCalendar
      */
     public function getLoginUrl($redirectUri)
     {
-        $loginUrl = $this->authority . sprintf($this->authorizeUrl, $this->clientId, urlencode($redirectUri), urlencode($this->scopes));
+        $loginUrl = $this->authority . sprintf($this->authorizeUrl, $this->clientId, urlencode($redirectUri), $this->base64UrlEncode(json_encode($this->parameters)), urlencode($this->scopes));
         return $loginUrl;
     }
 
@@ -168,14 +199,17 @@ class OutlookCalendar
      * from a refresh token.
      *
      * @param $refreshToken
+     * @param $redirectUri
      * @return array|mixed
      */
-    public function getTokenFromRefreshToken($refreshToken)
+    public function getTokenFromRefreshToken($refreshToken, $redirectUri)
     {
         // Build the form data to post to the OAuth2 token endpoint
         $token_request_data = [
             "grant_type" => "refresh_token",
             "refresh_token" => $refreshToken,
+            "redirect_uri" => $redirectUri,
+            "scope" => $this->scopes,
             "client_id" => $this->clientId,
             "client_secret" => $this->clientSecret
         ];
@@ -195,7 +229,6 @@ class OutlookCalendar
         }
 
         $response = curl_exec($curl);
-
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         if ($this->isFailure($httpCode)) {
