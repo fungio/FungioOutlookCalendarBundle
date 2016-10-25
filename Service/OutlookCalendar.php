@@ -302,6 +302,34 @@ class OutlookCalendar
     }
 
     /**
+     * Uses the Calendar API's CalendarView to get all events
+     * on a specific day. CalendarView handles expansion of recurring items.
+     *
+     * @param $access_token
+     * @param \DateTime $start
+     * @param \DateTime $end
+     * @return array|mixed
+     */
+    public function getEventsOnRange($access_token, \DateTime $start, \DateTime $end)
+    {
+        // Set the start of our view window to midnight of the specified day.
+        $windowStart = $start;
+        $windowStartUrl = $windowStart->format('Y-m-d\TH:i:s');
+
+        // Add one day to the window start time to get the window end.
+        $windowEnd = $end;
+        $windowEndUrl = $windowEnd->format('Y-m-d\TH:i:s');
+
+        // Build the API request URL
+        $calendarViewUrl = $this->outlookApiUrl . "/me/calendarview?"
+            . "startDateTime=" . $windowStartUrl
+            . "&endDateTime=" . $windowEndUrl
+            . '&$select=Subject,Start,End,Location';
+
+        return $this->makeApiCall($access_token, "GET", $calendarViewUrl);
+    }
+
+    /**
      * Make an API call.
      *
      * @param $access_token
