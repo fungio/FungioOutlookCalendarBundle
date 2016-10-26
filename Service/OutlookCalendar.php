@@ -330,6 +330,79 @@ class OutlookCalendar
     }
 
     /**
+     * @param $access_token
+     * @param $subject
+     * @param $content
+     * @param \DateTime $startTime
+     * @param \DateTime $endTime
+     * @param $attendeeString
+     * @param string $location
+     * @return array|mixed
+     * @throws \Exception
+     */
+    public function addEventToCalendar($access_token, $subject, $content, \DateTime $startTime, \DateTime $endTime, $attendeeString, $location = "")
+    {
+        $startTime->setTimeZone(new \DateTimeZone("UTC"));
+        $endTime->setTimeZone(new \DateTimeZone("UTC"));
+
+        $tz = $startTime->getTimezone();
+        // Generate the JSON payload
+        $event = [
+            "Subject" => $subject,
+            "Start" => [
+                "DateTime" => $startTime->format('Y-m-d\TH:i:s\Z'),
+                "TimeZone" => $tz->getName()
+            ],
+            "End" => [
+                "DateTime" => $endTime->format('Y-m-d\TH:i:s\Z'),
+                "TimeZone" => $tz->getName()
+            ],
+            "Body" => [
+                "ContentType" => "HTML",
+                "Content" => $content
+            ]
+        ];
+        if ($location != "") {
+            $event['Location'] = [
+                "DisplayName" => $location
+            ];
+        }
+
+        if (!is_null($attendeeString) && strlen($attendeeString) > 0) {
+            $attendeeAddresses = array_filter(explode(';', $attendeeString));
+
+            $attendees = [];
+            foreach ($attendeeAddresses as $address) {
+                $attendee = [
+                    "EmailAddress" => [
+                        "Address" => $address
+                    ],
+                    "Type" => "Required"
+                ];
+
+                $attendees[] = $attendee;
+            }
+
+            $event["Attendees"] = $attendees;
+        }
+
+        $eventPayload = json_encode($event);
+
+
+        $createEventUrl = $this->outlookApiUrl . "/me/events";
+
+        $response = $this->makeApiCall($access_token, "POST", $createEventUrl, $eventPayload);
+
+        // If the call succeeded, the response should be a JSON representation of the
+        // new event. Try getting the Id property and return it.
+        if (isset($response['Id'])) {
+            return $response['Id'];
+        } else {
+            return $response;
+        }
+    }
+
+    /**
      * Make an API call.
      *
      * @param $access_token
