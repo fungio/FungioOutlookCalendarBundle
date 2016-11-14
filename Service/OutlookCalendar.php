@@ -48,7 +48,7 @@ class OutlookCalendar
     /**
      * @var string
      */
-    protected $scopes = "openid https://outlook.office.com/calendars.readwrite offline_access";
+    protected $scopes = "openid https://outlook.office.com/calendars.readwrite https://outlook.office.com/contacts.read offline_access";
 
     /**
      * @var array
@@ -400,6 +400,33 @@ class OutlookCalendar
         } else {
             return $response;
         }
+    }
+
+    /**
+     * @param $access_token
+     * @return array|mixed
+     * @throws \Exception
+     */
+    public function listContacts($access_token)
+    {
+        // Build the API request URL
+        $calendarViewUrl = $this->outlookApiUrl . "/me/contacts?"
+            . '$select=EmailAddresses,GivenName,Surname';
+
+        $contacts = $this->makeApiCall($access_token, "GET", $calendarViewUrl);
+        $results = [];
+        foreach ($contacts['value'] as $contact) {
+            $name = "";
+            if (isset($contact['GivenName']) && !empty($contact['GivenName'])) {
+                $name .= ' ' . $contact['GivenName'];
+            }
+            if (isset($contact['Surname']) && !empty($contact['Surname'])) {
+                $name .= ' ' . $contact['Surname'];
+            }
+
+            $results[] = ['name' => trim($name), 'email' => $contact['EmailAddresses'][0]['Address']];
+        }
+        return $results;
     }
 
     /**
