@@ -340,7 +340,7 @@ class OutlookCalendar
      * @return array|mixed
      * @throws \Exception
      */
-    public function addEventToCalendar($access_token, $subject, $content, \DateTime $startTime, \DateTime $endTime, $attendeeString, $location = "")
+    public function addEventToCalendar($access_token, $subject, $content, \DateTime $startTime, \DateTime $endTime, $attendeeString = "", $location = "")
     {
         $startTime->setTimeZone(new \DateTimeZone("UTC"));
         $endTime->setTimeZone(new \DateTimeZone("UTC"));
