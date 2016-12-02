@@ -48,12 +48,64 @@ class OutlookCalendar
     /**
      * @var string
      */
-    protected $scopes = "openid https://outlook.office.com/calendars.readwrite https://outlook.office.com/contacts.read offline_access";
+    protected $scopes = "";
 
     /**
      * @var array
      */
     protected $parameters = [];
+
+    /**
+     * construct
+     */
+    public function __construct()
+    {
+        $this->scopes = implode(' ', ['openid', 'https://outlook.office.com/calendars.readwrite', 'offline_access']);
+    }
+
+    /**
+     * @param $scope
+     */
+    public function addScope($scope)
+    {
+        $this->scopes .= ' ' . $scope;
+    }
+
+    /**
+     * @param $scope
+     */
+    public function removeScope($scope)
+    {
+        $scopes = explode(' ', $this->scopes);
+        if (($key = array_search($scope, $scopes)) !== false) {
+            unset($scopes[$key]);
+        }
+        $this->scopes = implode(' ', $scopes);
+    }
+
+    /**
+     * Add contact scope
+     */
+    public function addScopeContact()
+    {
+        $this->addScope('https://outlook.office.com/contacts.read');
+    }
+
+    /**
+     * Remove calendar scope
+     */
+    public function removeScopeCalendar()
+    {
+        $this->removeScope('https://outlook.office.com/calendars.readwrite');
+    }
+
+    /**
+     * Remove offline_access scope
+     */
+    public function removeScopeOfflineAccess()
+    {
+        $this->removeScope('offline_access');
+    }
 
     /**
      * Set this to true to enable Fiddler capture.
