@@ -322,21 +322,6 @@ class OutlookCalendar
     }
 
     /**
-     * @param $access_token
-     * @param $eventId
-     * @param $params
-     *
-     * @return array|mixed
-     * @throws \Exception
-     */
-    public function updateEvent($access_token, $eventId, $params)
-    {
-        $calendarViewUrl = $this->outlookApiUrl . "/me/events/" . $eventId;
-
-        return $this->makeApiCall($access_token, "PATCH", $calendarViewUrl, $params);
-    }
-
-    /**
      * Uses the Calendar API's CalendarView to get all events
      * on a specific day. CalendarView handles expansion of recurring items.
      *
@@ -467,6 +452,88 @@ class OutlookCalendar
         $createEventUrl = $this->outlookApiUrl . "/me/events";
 
         $response = $this->makeApiCall($access_token, "POST", $createEventUrl, $eventPayload);
+
+        // If the call succeeded, the response should be a JSON representation of the
+        // new event. Try getting the Id property and return it.
+        if (isset($response['Id'])) {
+            return $response['Id'];
+        } else {
+            return $response;
+        }
+    }
+
+    /**
+     * @param           $access_token
+     * @param           $eventId
+     * @param           $subject
+     * @param           $content
+     * @param \DateTime $startTime
+     * @param \DateTime $endTime
+     * @param string    $attendeeString
+     * @param string    $location
+     * @param bool      $allDay
+     *
+     * @return array|mixed
+     */
+    public function updateEvent($access_token, $eventId, $subject, $content, \DateTime $startTime, \DateTime $endTime, $attendeeString = "", $location = "", $allDay = false)
+    {
+        $startTime->setTimeZone(new \DateTimeZone("UTC"));
+        $endTime->setTimeZone(new \DateTimeZone("UTC"));
+        if ($allDay) {
+            $startTime = clone $startTime;
+            $endTime->setTime(0, 0, 0);
+
+            $endTime = clone $startTime;
+            $endTime->modify('+1 day');
+        }
+
+        $tz = $startTime->getTimezone();
+        // Generate the JSON payload
+        $event = [
+            "Subject" => $subject,
+            "Start"   => [
+                "DateTime" => $startTime->format('Y-m-d\TH:i:s\Z'),
+                "TimeZone" => $tz->getName()
+            ],
+            "End"     => [
+                "DateTime" => $endTime->format('Y-m-d\TH:i:s\Z'),
+                "TimeZone" => $tz->getName()
+            ],
+            "Body"    => [
+                "ContentType" => "HTML",
+                "Content"     => $content
+            ]
+        ];
+        if ($location != "") {
+            $event['Location'] = [
+                "DisplayName" => $location
+            ];
+        }
+
+        if (!is_null($attendeeString) && strlen($attendeeString) > 0) {
+            $attendeeAddresses = array_filter(explode(';', $attendeeString));
+
+            $attendees = [];
+            foreach ($attendeeAddresses as $address) {
+                $attendee = [
+                    "EmailAddress" => [
+                        "Address" => $address
+                    ],
+                    "Type"         => "Required"
+                ];
+
+                $attendees[] = $attendee;
+            }
+
+            $event["Attendees"] = $attendees;
+        }
+
+        $eventPayload = json_encode($event);
+
+
+        $calendarViewUrl = $this->outlookApiUrl . "/me/events/" . $eventId;
+
+        $response = $this->makeApiCall($access_token, "PATCH", $calendarViewUrl, $eventPayload);
 
         // If the call succeeded, the response should be a JSON representation of the
         // new event. Try getting the Id property and return it.
