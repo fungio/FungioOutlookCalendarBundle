@@ -92,6 +92,14 @@ class OutlookCalendar
     }
 
     /**
+     * Add calendar scope
+     */
+    public function addScopeCalendar()
+    {
+        $this->addScope('https://outlook.office.com/calendars.readwrite');
+    }
+
+    /**
      * Remove calendar scope
      */
     public function removeScopeCalendar()
@@ -100,11 +108,19 @@ class OutlookCalendar
     }
 
     /**
+     * Add userinfo scope
+     */
+    public function addScopeUserInfos()
+    {
+//        $this->addScope('user.readbasic.all');
+    }
+
+    /**
      * Remove offline_access scope
      */
     public function removeScopeOfflineAccess()
     {
-        $this->removeScope('offline_access');
+        $this->removeScope('https://outlook.office.com/offline_access');
     }
 
     /**
@@ -378,6 +394,16 @@ class OutlookCalendar
             . '&$select=Subject,Start,End,Location';
 
         return $this->makeApiCall($access_token, "GET", $calendarViewUrl);
+    }
+
+    /**
+     * @param $access_token
+     *
+     * @return array|mixed
+     */
+    public function getUserInfos($access_token)
+    {
+        return $this->makeApiCall($access_token, "GET", "https://outlook.office.com/api/beta/me");
     }
 
     /**
