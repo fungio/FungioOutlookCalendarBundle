@@ -461,14 +461,16 @@ class OutlookCalendar
         if (count($attendeeAddresses)) {
             $attendees = [];
             foreach ($attendeeAddresses as $address) {
-                $attendee = [
-                    "EmailAddress" => [
-                        "Address" => $address
-                    ],
-                    "Type"         => "Required"
-                ];
+                if ($address != "") {
+                    $attendee = [
+                        "EmailAddress" => [
+                            "Address" => $address
+                        ],
+                        "Type"         => "Required"
+                    ];
 
-                $attendees[] = $attendee;
+                    $attendees[] = $attendee;
+                }
             }
 
             $event["Attendees"] = $attendees;
@@ -545,14 +547,16 @@ class OutlookCalendar
         if (count($attendeeAddresses)) {
             $attendees = [];
             foreach ($attendeeAddresses as $address) {
-                $attendee = [
-                    "EmailAddress" => [
-                        "Address" => $address
-                    ],
-                    "Type"         => "Required"
-                ];
+                if ($address != "") {
+                    $attendee = [
+                        "EmailAddress" => [
+                            "Address" => $address
+                        ],
+                        "Type"         => "Required"
+                    ];
 
-                $attendees[] = $attendee;
+                    $attendees[] = $attendee;
+                }
             }
 
             $event["Attendees"] = $attendees;
