@@ -454,13 +454,11 @@ class OutlookCalendar
             ];
         }
 
-        if (!is_null($attendeeString) && strlen($attendeeString) > 0) {
-            if (!is_array($attendeeString)) {
-                $attendeeAddresses = array_filter(explode(';', $attendeeString));
-            } else {
-                $attendeeAddresses = $attendeeString;
-            }
-
+        $attendeeAddresses = $attendeeString;
+        if (!is_array($attendeeAddresses)) {
+            $attendeeAddresses = array_filter(explode(';', $attendeeString));
+        }
+        if (count($attendeeAddresses)) {
             $attendees = [];
             foreach ($attendeeAddresses as $address) {
                 $attendee = [
@@ -540,9 +538,11 @@ class OutlookCalendar
             ];
         }
 
-        if (!is_null($attendeeString) && strlen($attendeeString) > 0) {
+        $attendeeAddresses = $attendeeString;
+        if (!is_array($attendeeAddresses)) {
             $attendeeAddresses = array_filter(explode(';', $attendeeString));
-
+        }
+        if (count($attendeeAddresses)) {
             $attendees = [];
             foreach ($attendeeAddresses as $address) {
                 $attendee = [
