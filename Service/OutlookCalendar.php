@@ -455,7 +455,11 @@ class OutlookCalendar
         }
 
         if (!is_null($attendeeString) && strlen($attendeeString) > 0) {
-            $attendeeAddresses = array_filter(explode(';', $attendeeString));
+            if (!is_array($attendeeString)) {
+                $attendeeAddresses = array_filter(explode(';', $attendeeString));
+            } else {
+                $attendeeAddresses = $attendeeString;
+            }
 
             $attendees = [];
             foreach ($attendeeAddresses as $address) {
