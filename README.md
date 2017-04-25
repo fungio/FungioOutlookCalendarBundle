@@ -54,7 +54,7 @@ fungio_outlook_calendar:
 ``` php
 <?php
 // in a controller
-$request = $this->getMasterRequest();
+$request = $this->get('request_stack')->getMasterRequest();
 $session = new Session();
 
 $outlookCalendar = $this->get('fungio.outlook_calendar');
