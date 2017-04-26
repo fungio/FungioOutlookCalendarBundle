@@ -360,7 +360,7 @@ class OutlookCalendar
         $windowEndUrl = $windowEnd->format('Y-m-d\TH:i:s');
 
         // Build the API request URL
-        $calendarViewUrl = $this->outlookApiUrl . '/me/'.(!is_null($calendarId) ? 'calendars/'.$calendarId.'/' : '').'calendarview?'
+        $calendarViewUrl = $this->outlookApiUrl . '/me/' . (!is_null($calendarId) ? 'calendars/' . $calendarId . '/' : '') . 'calendarview?'
             . "startDateTime=" . $windowStartUrl
             . "&endDateTime=" . $windowEndUrl
             . '&$select=Subject,Start,End,Location';
@@ -415,7 +415,7 @@ class OutlookCalendar
      */
     public function getCalendars($access_token)
     {
-        return $this->makeApiCall($access_token, "GET", "https://outlook.office.com/api/v2.0/me/calendars");
+        return $this->makeApiCall($access_token, "GET", $this->outlookApiUrl . "/me/calendars");
     }
 
     /**
