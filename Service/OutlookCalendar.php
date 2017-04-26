@@ -343,10 +343,11 @@ class OutlookCalendar
      *
      * @param           $access_token
      * @param \DateTime $date
+     * @param           $calendarId
      *
      * @return array|mixed
      */
-    public function getEventsForDate($access_token, \DateTime $date)
+    public function getEventsForDate($access_token, \DateTime $date, $calendarId = null)
     {
         // Set the start of our view window to midnight of the specified day.
         $windowStart = clone $date;
@@ -359,7 +360,7 @@ class OutlookCalendar
         $windowEndUrl = $windowEnd->format('Y-m-d\TH:i:s');
 
         // Build the API request URL
-        $calendarViewUrl = $this->outlookApiUrl . "/me/calendarview?"
+        $calendarViewUrl = $this->outlookApiUrl . '/me/'.(!is_null($calendarId) ? 'calendars/'.$calendarId.'/' : '').'calendarview?'
             . "startDateTime=" . $windowStartUrl
             . "&endDateTime=" . $windowEndUrl
             . '&$select=Subject,Start,End,Location';
@@ -374,10 +375,11 @@ class OutlookCalendar
      * @param           $access_token
      * @param \DateTime $start
      * @param \DateTime $end
+     * @param           $calendarId
      *
      * @return array|mixed
      */
-    public function getEventsOnRange($access_token, \DateTime $start, \DateTime $end)
+    public function getEventsOnRange($access_token, \DateTime $start, \DateTime $end, $calendarId = null)
     {
         // Set the start of our view window to midnight of the specified day.
         $windowStart = $start;
@@ -388,7 +390,7 @@ class OutlookCalendar
         $windowEndUrl = $windowEnd->format('Y-m-d\TH:i:s');
 
         // Build the API request URL
-        $calendarViewUrl = $this->outlookApiUrl . "/me/calendarview?"
+        $calendarViewUrl = $this->outlookApiUrl . '/me/' . (!is_null($calendarId) ? 'calendars/' . $calendarId . '/' : '') . 'calendarview?'
             . "startDateTime=" . $windowStartUrl
             . "&endDateTime=" . $windowEndUrl
             . '&$select=Subject,Start,End,Location';
@@ -404,6 +406,16 @@ class OutlookCalendar
     public function getUserInfos($access_token)
     {
         return $this->makeApiCall($access_token, "GET", "https://outlook.office.com/api/beta/me");
+    }
+
+    /**
+     * @param $access_token
+     *
+     * @return array|mixed
+     */
+    public function getCalendars($access_token)
+    {
+        return $this->makeApiCall($access_token, "GET", "https://outlook.office.com/api/v2.0/me/calendars");
     }
 
     /**
