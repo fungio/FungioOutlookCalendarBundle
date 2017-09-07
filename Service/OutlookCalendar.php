@@ -613,7 +613,12 @@ class OutlookCalendar
                 $name .= ' ' . $contact['Surname'];
             }
 
-            $results[] = ['name' => trim($name), 'email' => $contact['EmailAddresses'][0]['Address']];
+            $results[] = [
+                'firstname' => $contact['GivenName'],
+                'lastname' => $contact['Surname'],
+                'name' => trim($name),
+                'email' => $contact['EmailAddresses'][0]['Address']
+            ];
         }
 
         return $results;
