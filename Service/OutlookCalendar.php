@@ -589,6 +589,26 @@ class OutlookCalendar
             return $response;
         }
     }
+    
+    /**
+     * @param $access_token
+     * @param $eventId
+     *
+     * @return array|mixed
+     */
+    public function deleteEvent($access_token, $eventId)
+    {
+        $calendarViewUrl = $this->outlookApiUrl . "/me/events/" . $eventId;
+        $response = $this->makeApiCall($access_token, "DELETE", $calendarViewUrl);
+
+        // If the call succeeded, the response should be a JSON representation of the
+        // new event. Try getting the Id property and return it.
+        if (isset($response['Id'])) {
+            return $response['Id'];
+        } else {
+            return $response;
+        }
+    }
 
     /**
      * @param $access_token
