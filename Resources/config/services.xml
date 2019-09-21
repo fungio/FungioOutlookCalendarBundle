@@ -10,7 +10,7 @@
     </parameters>
 
     <services>
-        <service id="fungio.outlook_calendar" class="%fungio.outlook_calendar.class%" />
+        <service id="fungio.outlook_calendar" class="%fungio.outlook_calendar.class%" public="true" />
     </services>
 
 </container>
