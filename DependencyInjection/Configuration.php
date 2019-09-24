@@ -17,8 +17,8 @@ class Configuration implements ConfigurationInterface
      */
     public function getConfigTreeBuilder()
     {
-        $treeBuilder = new TreeBuilder();
-        $rootNode = $treeBuilder->root('fungio_outlook_calendar');
+        $treeBuilder = new TreeBuilder('fungio_outlook_calendar');
+        $rootNode = $treeBuilder->getRootNode();
         $rootNode
             ->children()
                 ->arrayNode('outlook_calendar')->addDefaultsIfNotSet()
