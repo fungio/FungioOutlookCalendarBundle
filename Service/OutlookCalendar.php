@@ -770,4 +770,12 @@ class OutlookCalendar
         // Simplistic check for failure HTTP status
         return ($httpStatus >= 400);
     }
+
+    /**
+     * @return string
+     */
+    public function getOutlookApiUrl()
+    {
+        return $this->outlookApiUrl;
+    }
 }
