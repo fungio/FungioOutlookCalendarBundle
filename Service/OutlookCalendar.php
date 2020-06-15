@@ -2,6 +2,8 @@
 
 namespace Fungio\OutlookCalendarBundle\Service;
 
+use DateTime;
+
 /**
  * Class OutlookCalendar
  * @package Fungio\OutlookCalendarBundle\Service
@@ -23,7 +25,7 @@ class OutlookCalendar
     /**
      * @var string
      */
-    protected $authority = "https://login.microsoftonline.com";
+    protected $authority = 'https://login.microsoftonline.com';
 
     /**
      * @var string
@@ -33,7 +35,7 @@ class OutlookCalendar
     /**
      * @var string
      */
-    protected $tokenUrl = "/common/oauth2/v2.0/token";
+    protected $tokenUrl = '/common/oauth2/v2.0/token';
 
     /**
      * @var string
@@ -43,12 +45,12 @@ class OutlookCalendar
     /**
      * @var string
      */
-    protected $outlookApiUrl = "https://outlook.office.com/api/v2.0";
+    protected $graphApiUrl = 'https://graph.microsoft.com/v1.0';
 
     /**
      * @var string
      */
-    protected $scopes = "";
+    protected $scopes = '';
 
     /**
      * @var array
@@ -60,7 +62,13 @@ class OutlookCalendar
      */
     public function __construct()
     {
-        $this->scopes = implode(' ', ['openid', 'https://graph.microsoft.com/Calendars.ReadWrite', 'offline_access']);
+        $this->scopes = implode(
+            ' ', [
+            'openid',
+            'https://graph.microsoft.com/Calendars.ReadWrite',
+            'offline_access'
+        ]
+        );
     }
 
     /**
@@ -209,9 +217,7 @@ class OutlookCalendar
      */
     public function getLoginUrl($redirectUri)
     {
-        $loginUrl = $this->authority . sprintf($this->authorizeUrl, $this->clientId, urlencode($redirectUri), $this->base64UrlEncode(json_encode($this->parameters)), urlencode($this->scopes));
-
-        return $loginUrl;
+        return $this->authority . sprintf($this->authorizeUrl, $this->clientId, urlencode($redirectUri), $this->base64UrlEncode(json_encode($this->parameters)), urlencode($this->scopes));
     }
 
     /**
@@ -223,9 +229,7 @@ class OutlookCalendar
      */
     public function getLogoutUrl($redirectUri)
     {
-        $logoutUrl = $this->authority . sprintf($this->logoutUrl, urlencode($redirectUri));
-
-        return $logoutUrl;
+        return $this->authority . sprintf($this->logoutUrl, urlencode($redirectUri));
     }
 
     /**
@@ -241,12 +245,12 @@ class OutlookCalendar
     {
         // Build the form data to post to the OAuth2 token endpoint
         $token_request_data = [
-            "grant_type"    => "authorization_code",
-            "code"          => $authCode,
-            "redirect_uri"  => $redirectUri,
-            "client_id"     => $this->clientId,
-            "client_secret" => $this->clientSecret,
-            "scope"         => $this->scopes
+            'grant_type'    => 'authorization_code',
+            'code'          => $authCode,
+            'redirect_uri'  => $redirectUri,
+            'client_id'     => $this->clientId,
+            'client_secret' => $this->clientSecret,
+            'scope'         => $this->scopes
         ];
 
         // Calling http_build_query is important to get the data
@@ -262,7 +266,7 @@ class OutlookCalendar
             // ENABLE FIDDLER TRACE
             curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
             // SET PROXY TO FIDDLER PROXY
-            curl_setopt($curl, CURLOPT_PROXY, "127.0.0.1:8888");
+            curl_setopt($curl, CURLOPT_PROXY, '127.0.0.1:8888');
         }
 
         $response = curl_exec($curl);
@@ -279,7 +283,7 @@ class OutlookCalendar
         $curl_errno = curl_errno($curl);
         $curl_err = curl_error($curl);
         if ($curl_errno) {
-            $msg = $curl_errno . ": " . $curl_err;
+            $msg = $curl_errno . ': ' . $curl_err;
 
             return [
                 'errorNumber' => $curl_errno,
@@ -290,9 +294,7 @@ class OutlookCalendar
         curl_close($curl);
         // The response is a JSON payload, so decode it into
         // an array.
-        $json_vals = json_decode($response, true);
-
-        return $json_vals;
+        return json_decode($response, true);
     }
 
     /**
@@ -308,12 +310,12 @@ class OutlookCalendar
     {
         // Build the form data to post to the OAuth2 token endpoint
         $token_request_data = [
-            "grant_type"    => "refresh_token",
-            "refresh_token" => $refreshToken,
-            "redirect_uri"  => $redirectUri,
-            "scope"         => $this->scopes,
-            "client_id"     => $this->clientId,
-            "client_secret" => $this->clientSecret
+            'grant_type'    => 'refresh_token',
+            'refresh_token' => $refreshToken,
+            'redirect_uri'  => $redirectUri,
+            'scope'         => $this->scopes,
+            'client_id'     => $this->clientId,
+            'client_secret' => $this->clientSecret
         ];
 
         $token_request_body = http_build_query($token_request_data);
@@ -327,7 +329,7 @@ class OutlookCalendar
             // ENABLE FIDDLER TRACE
             curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
             // SET PROXY TO FIDDLER PROXY
-            curl_setopt($curl, CURLOPT_PROXY, "127.0.0.1:8888");
+            curl_setopt($curl, CURLOPT_PROXY, '127.0.0.1:8888');
         }
 
         $response = curl_exec($curl);
@@ -344,7 +346,7 @@ class OutlookCalendar
         $curl_errno = curl_errno($curl);
         $curl_err = curl_error($curl);
         if ($curl_errno) {
-            $msg = $curl_errno . ": " . $curl_err;
+            $msg = $curl_errno . ': ' . $curl_err;
 
             return [
                 'errorNumber' => $curl_errno,
@@ -356,9 +358,7 @@ class OutlookCalendar
 
         // The response is a JSON payload, so decode it into
         // an array.
-        $json_vals = json_decode($response, true);
-
-        return $json_vals;
+        return json_decode($response, true);
     }
 
     /**
@@ -366,12 +366,13 @@ class OutlookCalendar
      * on a specific day. CalendarView handles expansion of recurring items.
      *
      * @param           $access_token
-     * @param \DateTime $date
+     * @param DateTime  $date
      * @param           $calendarId
      *
      * @return array|mixed
+     * @throws \Exception
      */
-    public function getEventsForDate($access_token, \DateTime $date, $calendarId = null)
+    public function getEventsForDate($access_token, DateTime $date, $calendarId = null)
     {
         // Set the start of our view window to midnight of the specified day.
         $windowStart = clone $date;
@@ -384,12 +385,12 @@ class OutlookCalendar
         $windowEndUrl = $windowEnd->format('Y-m-d\TH:i:s');
 
         // Build the API request URL
-        $calendarViewUrl = $this->outlookApiUrl . '/me/' . (!is_null($calendarId) ? 'calendars/' . $calendarId . '/' : '') . 'calendarview?'
-            . "startDateTime=" . $windowStartUrl
-            . "&endDateTime=" . $windowEndUrl
+        $calendarViewUrl = $this->graphApiUrl . '/me/' . ($calendarId !== null ? 'calendars/' . $calendarId . '/' : '') . 'calendarview?'
+            . 'startDateTime=' . $windowStartUrl
+            . '&endDateTime=' . $windowEndUrl
             . '&$select=Subject,Start,End,Location';
 
-        return $this->makeApiCall($access_token, "GET", $calendarViewUrl);
+        return $this->makeApiCall($access_token, 'GET', $calendarViewUrl);
     }
 
     /**
@@ -397,13 +398,14 @@ class OutlookCalendar
      * on a specific day. CalendarView handles expansion of recurring items.
      *
      * @param           $access_token
-     * @param \DateTime $start
-     * @param \DateTime $end
+     * @param DateTime  $start
+     * @param DateTime  $end
      * @param           $calendarId
      *
      * @return array|mixed
+     * @throws \Exception
      */
-    public function getEventsOnRange($access_token, \DateTime $start, \DateTime $end, $calendarId = null)
+    public function getEventsOnRange($access_token, DateTime $start, DateTime $end, $calendarId = null)
     {
         // Set the start of our view window to midnight of the specified day.
         $windowStart = $start;
@@ -414,51 +416,64 @@ class OutlookCalendar
         $windowEndUrl = $windowEnd->format('Y-m-d\TH:i:s');
 
         // Build the API request URL
-        $calendarViewUrl = $this->outlookApiUrl . '/me/' . (!is_null($calendarId) ? 'calendars/' . $calendarId . '/' : '') . 'calendarview?'
-            . "startDateTime=" . $windowStartUrl
-            . "&endDateTime=" . $windowEndUrl
+        $calendarViewUrl = $this->graphApiUrl . '/me/' . ($calendarId !== null ? 'calendars/' . $calendarId . '/' : '') . 'calendarview?'
+            . 'startDateTime=' . $windowStartUrl
+            . '&endDateTime=' . $windowEndUrl
             . '&$select=Subject,Start,End,Location';
 
-        return $this->makeApiCall($access_token, "GET", $calendarViewUrl);
+        return $this->makeApiCall($access_token, 'GET', $calendarViewUrl);
     }
 
     /**
      * @param $access_token
-     *
-     * @return array|mixed
-     */
-    public function getUserInfos($access_token)
-    {
-        return $this->makeApiCall($access_token, "GET", "https://outlook.office.com/api/beta/me");
-    }
-
-    /**
-     * @param $access_token
-     *
-     * @return array|mixed
-     */
-    public function getCalendars($access_token)
-    {
-        return $this->makeApiCall($access_token, "GET", $this->outlookApiUrl . "/me/calendars");
-    }
-
-    /**
-     * @param string    $access_token
-     * @param string    $subject
-     * @param string    $content
-     * @param \DateTime $startTime
-     * @param \DateTime $endTime
-     * @param string    $attendeeString
-     * @param string    $location
-     * @param boolean   $allDay
      *
      * @return array|mixed
      * @throws \Exception
      */
-    public function addEventToCalendar($access_token, $subject, $content, \DateTime $startTime, \DateTime $endTime, $attendeeString = "", $location = "", $allDay = false)
+    public function getUserInfos($access_token)
     {
-        $startTime->setTimeZone(new \DateTimeZone("UTC"));
-        $endTime->setTimeZone(new \DateTimeZone("UTC"));
+        return $this->makeApiCall($access_token, 'GET', $this->graphApiUrl . '/me');
+    }
+
+    /**
+     * @param $access_token
+     *
+     * @return array|mixed
+     * @throws \Exception
+     */
+    public function getPhoto($access_token)
+    {
+        return $this->makeApiCall($access_token, 'GET', $this->graphApiUrl . '/me/photos/48x48/$value');
+    }
+
+    /**
+     * @param $access_token
+     *
+     * @return array|mixed
+     * @throws \Exception
+     */
+    public function getCalendars($access_token)
+    {
+        return $this->makeApiCall($access_token, 'GET', $this->graphApiUrl . '/me/calendars');
+    }
+
+    /**
+     * @param string   $access_token
+     * @param string   $subject
+     * @param string   $content
+     * @param DateTime $startTime
+     * @param DateTime $endTime
+     * @param string   $attendeeString
+     * @param string   $location
+     * @param boolean  $allDay
+     *
+     * @return array|mixed
+     * @throws \Exception
+     */
+    public function addEventToCalendar($access_token, $subject, $content, DateTime $startTime, DateTime $endTime, $attendeeString = '', $location = '', $allDay = false)
+    {
+        $startTime->setTimeZone(new \DateTimeZone('UTC'));
+        $endTime->setTimeZone(new \DateTimeZone('UTC'));
         if ($allDay) {
             $startTime = clone $startTime;
             $endTime->setTime(0, 0, 0);
@@ -470,23 +485,23 @@ class OutlookCalendar
         $tz = $startTime->getTimezone();
         // Generate the JSON payload
         $event = [
-            "Subject" => $subject,
-            "Start"   => [
-                "DateTime" => $startTime->format('Y-m-d\TH:i:s\Z'),
-                "TimeZone" => $tz->getName()
+            'Subject' => $subject,
+            'Start'   => [
+                'DateTime' => $startTime->format('Y-m-d\TH:i:s\Z'),
+                'TimeZone' => $tz->getName()
             ],
-            "End"     => [
-                "DateTime" => $endTime->format('Y-m-d\TH:i:s\Z'),
-                "TimeZone" => $tz->getName()
+            'End'     => [
+                'DateTime' => $endTime->format('Y-m-d\TH:i:s\Z'),
+                'TimeZone' => $tz->getName()
             ],
-            "Body"    => [
-                "ContentType" => "HTML",
-                "Content"     => $content
+            'Body'    => [
+                'ContentType' => 'HTML',
+                'Content'     => $content
             ]
         ];
-        if ($location != "") {
+        if ($location != '') {
             $event['Location'] = [
-                "DisplayName" => $location
+                'DisplayName' => $location
             ];
         }
 
@@ -497,35 +512,35 @@ class OutlookCalendar
         if (count($attendeeAddresses)) {
             $attendees = [];
             foreach ($attendeeAddresses as $address) {
-                if ($address != "") {
+                if ($address != '') {
                     $attendee = [
-                        "EmailAddress" => [
-                            "Address" => $address
+                        'EmailAddress' => [
+                            'Address' => $address
                         ],
-                        "Type"         => "Required"
+                        'Type'         => 'Required'
                     ];
 
                     $attendees[] = $attendee;
                 }
             }
 
-            $event["Attendees"] = $attendees;
+            $event['Attendees'] = $attendees;
         }
 
         $eventPayload = json_encode($event);
 
 
-        $createEventUrl = $this->outlookApiUrl . "/me/events";
+        $createEventUrl = $this->graphApiUrl . '/me/events';
 
-        $response = $this->makeApiCall($access_token, "POST", $createEventUrl, $eventPayload);
+        $response = $this->makeApiCall($access_token, 'POST', $createEventUrl, $eventPayload);
 
         // If the call succeeded, the response should be a JSON representation of the
         // new event. Try getting the Id property and return it.
         if (isset($response['Id'])) {
             return $response['Id'];
-        } else {
-            return $response;
         }
+
+        return $response;
     }
 
     /**
@@ -533,18 +548,19 @@ class OutlookCalendar
      * @param           $eventId
      * @param           $subject
      * @param           $content
-     * @param \DateTime $startTime
-     * @param \DateTime $endTime
+     * @param DateTime  $startTime
+     * @param DateTime  $endTime
      * @param string    $attendeeString
      * @param string    $location
      * @param bool      $allDay
      *
      * @return array|mixed
+     * @throws \Exception
      */
-    public function updateEvent($access_token, $eventId, $subject, $content, \DateTime $startTime, \DateTime $endTime, $attendeeString = "", $location = "", $allDay = false)
+    public function updateEvent($access_token, $eventId, $subject, $content, DateTime $startTime, DateTime $endTime, $attendeeString = '', $location = '', $allDay = false)
     {
-        $startTime->setTimeZone(new \DateTimeZone("UTC"));
-        $endTime->setTimeZone(new \DateTimeZone("UTC"));
+        $startTime->setTimeZone(new \DateTimeZone('UTC'));
+        $endTime->setTimeZone(new \DateTimeZone('UTC'));
         if ($allDay) {
             $startTime = clone $startTime;
             $endTime->setTime(0, 0, 0);
@@ -556,23 +572,23 @@ class OutlookCalendar
         $tz = $startTime->getTimezone();
         // Generate the JSON payload
         $event = [
-            "Subject" => $subject,
-            "Start"   => [
-                "DateTime" => $startTime->format('Y-m-d\TH:i:s\Z'),
-                "TimeZone" => $tz->getName()
+            'Subject' => $subject,
+            'Start'   => [
+                'DateTime' => $startTime->format('Y-m-d\TH:i:s\Z'),
+                'TimeZone' => $tz->getName()
             ],
-            "End"     => [
-                "DateTime" => $endTime->format('Y-m-d\TH:i:s\Z'),
-                "TimeZone" => $tz->getName()
+            'End'     => [
+                'DateTime' => $endTime->format('Y-m-d\TH:i:s\Z'),
+                'TimeZone' => $tz->getName()
             ],
-            "Body"    => [
-                "ContentType" => "HTML",
-                "Content"     => $content
+            'Body'    => [
+                'ContentType' => 'HTML',
+                'Content'     => $content
             ]
         ];
-        if ($location != "") {
+        if ($location != '') {
             $event['Location'] = [
-                "DisplayName" => $location
+                'DisplayName' => $location
             ];
         }
 
@@ -583,55 +599,56 @@ class OutlookCalendar
         if (count($attendeeAddresses)) {
             $attendees = [];
             foreach ($attendeeAddresses as $address) {
-                if ($address != "") {
+                if ($address != '') {
                     $attendee = [
-                        "EmailAddress" => [
-                            "Address" => $address
+                        'EmailAddress' => [
+                            'Address' => $address
                         ],
-                        "Type"         => "Required"
+                        'Type'         => 'Required'
                     ];
 
                     $attendees[] = $attendee;
                 }
             }
 
-            $event["Attendees"] = $attendees;
+            $event['Attendees'] = $attendees;
         }
 
         $eventPayload = json_encode($event);
 
 
-        $calendarViewUrl = $this->outlookApiUrl . "/me/events/" . $eventId;
+        $calendarViewUrl = $this->graphApiUrl . '/me/events/' . $eventId;
 
-        $response = $this->makeApiCall($access_token, "PATCH", $calendarViewUrl, $eventPayload);
+        $response = $this->makeApiCall($access_token, 'PATCH', $calendarViewUrl, $eventPayload);
 
         // If the call succeeded, the response should be a JSON representation of the
         // new event. Try getting the Id property and return it.
         if (isset($response['Id'])) {
             return $response['Id'];
-        } else {
-            return $response;
         }
+
+        return $response;
     }
-    
+
     /**
      * @param $access_token
      * @param $eventId
      *
      * @return array|mixed
+     * @throws \Exception
      */
     public function deleteEvent($access_token, $eventId)
     {
-        $calendarViewUrl = $this->outlookApiUrl . "/me/events/" . $eventId;
-        $response = $this->makeApiCall($access_token, "DELETE", $calendarViewUrl);
+        $calendarViewUrl = $this->graphApiUrl . '/me/events/' . $eventId;
+        $response = $this->makeApiCall($access_token, 'DELETE', $calendarViewUrl);
 
         // If the call succeeded, the response should be a JSON representation of the
         // new event. Try getting the Id property and return it.
         if (isset($response['Id'])) {
             return $response['Id'];
-        } else {
-            return $response;
         }
+
+        return $response;
     }
 
     /**
@@ -643,13 +660,13 @@ class OutlookCalendar
     public function listContacts($access_token)
     {
         // Build the API request URL
-        $calendarViewUrl = $this->outlookApiUrl . "/me/contacts?"
+        $calendarViewUrl = $this->graphApiUrl . '/me/contacts?'
             . '$select=EmailAddresses,GivenName,Surname';
 
-        $contacts = $this->makeApiCall($access_token, "GET", $calendarViewUrl);
+        $contacts = $this->makeApiCall($access_token, 'GET', $calendarViewUrl);
         $results = [];
         foreach ($contacts['value'] as $contact) {
-            $name = "";
+            $name = '';
             if (isset($contact['GivenName']) && !empty($contact['GivenName'])) {
                 $name .= ' ' . $contact['GivenName'];
             }
@@ -659,9 +676,9 @@ class OutlookCalendar
 
             $results[] = [
                 'firstname' => $contact['GivenName'],
-                'lastname' => $contact['Surname'],
-                'name' => trim($name),
-                'email' => $contact['EmailAddresses'][0]['Address']
+                'lastname'  => $contact['Surname'],
+                'name'      => trim($name),
+                'email'     => $contact['EmailAddresses'][0]['Address']
             ];
         }
 
@@ -683,37 +700,42 @@ class OutlookCalendar
     {
         // Generate the list of headers to always send.
         $headers = [
-            "User-Agent: php-tutorial/1.0",         // Sending a User-Agent header is a best practice.
-            "Authorization: Bearer " . $access_token, // Always need our auth token!
-            "Accept: application/json",             // Always accept JSON response.
-            "client-request-id: " . $this->makeGuid(), // Stamp each new request with a new GUID.
-            "return-client-request-id: true",       // Tell the server to include our request-id GUID in the response
+            'User-Agent: php-tutorial/1.0',
+            // Sending a User-Agent header is a best practice.
+            'Authorization: Bearer ' . $access_token,
+            // Always need our auth token!
+            'Accept: application/json',
+            // Always accept JSON response.
+            'client-request-id: ' . $this->makeGuid(),
+            // Stamp each new request with a new GUID.
+            'return-client-request-id: true',
+            // Tell the server to include our request-id GUID in the response
         ];
 
         $curl = curl_init($url);
 
         switch (strtoupper($method)) {
-            case "GET":
+            case 'GET':
                 // Nothing to do, GET is the default and needs no
                 // extra headers.
                 break;
-            case "POST":
+            case 'POST':
                 // Add a Content-Type header (IMPORTANT!)
-                $headers[] = "Content-Type: application/json";
+                $headers[] = 'Content-Type: application/json';
                 curl_setopt($curl, CURLOPT_POST, true);
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
                 break;
-            case "PATCH":
+            case 'PATCH':
                 // Add a Content-Type header (IMPORTANT!)
-                $headers[] = "Content-Type: application/json";
-                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "PATCH");
+                $headers[] = 'Content-Type: application/json';
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'PATCH');
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
                 break;
-            case "DELETE":
-                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+            case 'DELETE':
+                curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'DELETE');
                 break;
             default:
-                throw new \Exception("INVALID METHOD: " . $method);
+                throw new \RuntimeException('INVALID METHOD: ' . $method);
         }
 
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -733,18 +755,18 @@ class OutlookCalendar
         $curl_err = curl_error($curl);
 
         if ($curl_errno) {
-            $msg = $curl_errno . ": " . $curl_err;
+            $msg = $curl_errno . ': ' . $curl_err;
             curl_close($curl);
 
             return [
                 'errorNumber' => $curl_errno,
                 'error'       => $msg
             ];
-        } else {
-            curl_close($curl);
-
-            return json_decode($response, true);
         }
+
+        curl_close($curl);
+
+        return json_decode($response, true);
     }
 
     /**
@@ -756,17 +778,15 @@ class OutlookCalendar
     {
         if (function_exists('com_create_guid')) {
             return strtolower(trim(com_create_guid(), '{}'));
-        } else {
-            $charid = strtolower(md5(uniqid(rand(), true)));
-            $hyphen = chr(45);
-            $uuid = substr($charid, 0, 8) . $hyphen
-                . substr($charid, 8, 4) . $hyphen
-                . substr($charid, 12, 4) . $hyphen
-                . substr($charid, 16, 4) . $hyphen
-                . substr($charid, 20, 12);
-
-            return $uuid;
         }
+
+        $charid = strtolower(md5(uniqid(mt_rand(), true)));
+        $hyphen = chr(45);
+        return substr($charid, 0, 8) . $hyphen
+            . substr($charid, 8, 4) . $hyphen
+            . substr($charid, 12, 4) . $hyphen
+            . substr($charid, 16, 4) . $hyphen
+            . substr($charid, 20, 12);
     }
 
     /**
@@ -776,7 +796,7 @@ class OutlookCalendar
      */
     public function isConnected($access_token)
     {
-        $events = $this->getEventsForDate($access_token, new \DateTime('now'));
+        $events = $this->getEventsForDate($access_token, new DateTime('now'));
         if (array_key_exists('error', $events)) {
             return false;
         }
@@ -798,8 +818,8 @@ class OutlookCalendar
     /**
      * @return string
      */
-    public function getOutlookApiUrl()
+    public function getGraphApiUrl()
     {
-        return $this->outlookApiUrl;
+        return $this->graphApiUrl;
     }
 }
