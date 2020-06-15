@@ -64,10 +64,10 @@ class OutlookCalendar
     {
         $this->scopes = implode(
             ' ', [
-            'openid',
-            'https://graph.microsoft.com/Calendars.ReadWrite',
-            'offline_access'
-        ]
+                'openid',
+                'https://graph.microsoft.com/Calendars.ReadWrite',
+                'offline_access'
+            ]
         );
     }
 
@@ -443,7 +443,7 @@ class OutlookCalendar
      */
     public function getPhoto($access_token)
     {
-        return $this->makeApiCall($access_token, 'GET', $this->graphApiUrl . '/me/photos/48x48/$value');
+        return $this->makeApiCall($access_token, 'GET', $this->graphApiUrl . '/me/photo');
     }
 
     /**
@@ -485,23 +485,23 @@ class OutlookCalendar
         $tz = $startTime->getTimezone();
         // Generate the JSON payload
         $event = [
-            'Subject' => $subject,
-            'Start'   => [
-                'DateTime' => $startTime->format('Y-m-d\TH:i:s\Z'),
-                'TimeZone' => $tz->getName()
+            'subject' => $subject,
+            'start'   => [
+                'dateTime' => $startTime->format('Y-m-d\TH:i:s\Z'),
+                'timeZone' => $tz->getName()
             ],
-            'End'     => [
-                'DateTime' => $endTime->format('Y-m-d\TH:i:s\Z'),
-                'TimeZone' => $tz->getName()
+            'end'     => [
+                'dateTime' => $endTime->format('Y-m-d\TH:i:s\Z'),
+                'timeZone' => $tz->getName()
             ],
-            'Body'    => [
-                'ContentType' => 'HTML',
-                'Content'     => $content
+            'body'    => [
+                'contentType' => 'HTML',
+                'content'     => $content
             ]
         ];
         if ($location != '') {
-            $event['Location'] = [
-                'DisplayName' => $location
+            $event['location'] = [
+                'displayName' => $location
             ];
         }
 
@@ -514,21 +514,20 @@ class OutlookCalendar
             foreach ($attendeeAddresses as $address) {
                 if ($address != '') {
                     $attendee = [
-                        'EmailAddress' => [
-                            'Address' => $address
+                        'emailAddress' => [
+                            'address' => $address
                         ],
-                        'Type'         => 'Required'
+                        'type'         => 'required'
                     ];
 
                     $attendees[] = $attendee;
                 }
             }
 
-            $event['Attendees'] = $attendees;
+            $event['attendees'] = $attendees;
         }
 
         $eventPayload = json_encode($event);
-
 
         $createEventUrl = $this->graphApiUrl . '/me/events';
 
@@ -536,8 +535,8 @@ class OutlookCalendar
 
         // If the call succeeded, the response should be a JSON representation of the
         // new event. Try getting the Id property and return it.
-        if (isset($response['Id'])) {
-            return $response['Id'];
+        if (isset($response['id'])) {
+            return $response['id'];
         }
 
         return $response;
@@ -572,23 +571,23 @@ class OutlookCalendar
         $tz = $startTime->getTimezone();
         // Generate the JSON payload
         $event = [
-            'Subject' => $subject,
-            'Start'   => [
-                'DateTime' => $startTime->format('Y-m-d\TH:i:s\Z'),
-                'TimeZone' => $tz->getName()
+            'subject' => $subject,
+            'start'   => [
+                'dateTime' => $startTime->format('Y-m-d\TH:i:s\Z'),
+                'timeZone' => $tz->getName()
             ],
-            'End'     => [
-                'DateTime' => $endTime->format('Y-m-d\TH:i:s\Z'),
-                'TimeZone' => $tz->getName()
+            'end'     => [
+                'dateTime' => $endTime->format('Y-m-d\TH:i:s\Z'),
+                'timeZone' => $tz->getName()
             ],
-            'Body'    => [
-                'ContentType' => 'HTML',
-                'Content'     => $content
+            'body'    => [
+                'contentType' => 'HTML',
+                'content'     => $content
             ]
         ];
         if ($location != '') {
-            $event['Location'] = [
-                'DisplayName' => $location
+            $event['location'] = [
+                'displayName' => $location
             ];
         }
 
@@ -601,17 +600,17 @@ class OutlookCalendar
             foreach ($attendeeAddresses as $address) {
                 if ($address != '') {
                     $attendee = [
-                        'EmailAddress' => [
-                            'Address' => $address
+                        'emailAddress' => [
+                            'address' => $address
                         ],
-                        'Type'         => 'Required'
+                        'type'         => 'required'
                     ];
 
                     $attendees[] = $attendee;
                 }
             }
 
-            $event['Attendees'] = $attendees;
+            $event['attendees'] = $attendees;
         }
 
         $eventPayload = json_encode($event);
@@ -623,8 +622,8 @@ class OutlookCalendar
 
         // If the call succeeded, the response should be a JSON representation of the
         // new event. Try getting the Id property and return it.
-        if (isset($response['Id'])) {
-            return $response['Id'];
+        if (isset($response['id'])) {
+            return $response['id'];
         }
 
         return $response;
@@ -644,8 +643,8 @@ class OutlookCalendar
 
         // If the call succeeded, the response should be a JSON representation of the
         // new event. Try getting the Id property and return it.
-        if (isset($response['Id'])) {
-            return $response['Id'];
+        if (isset($response['id'])) {
+            return $response['id'];
         }
 
         return $response;
@@ -667,18 +666,18 @@ class OutlookCalendar
         $results = [];
         foreach ($contacts['value'] as $contact) {
             $name = '';
-            if (isset($contact['GivenName']) && !empty($contact['GivenName'])) {
-                $name .= ' ' . $contact['GivenName'];
+            if (isset($contact['givenName']) && !empty($contact['givenName'])) {
+                $name .= ' ' . $contact['givenName'];
             }
-            if (isset($contact['Surname']) && !empty($contact['Surname'])) {
-                $name .= ' ' . $contact['Surname'];
+            if (isset($contact['surname']) && !empty($contact['surname'])) {
+                $name .= ' ' . $contact['surname'];
             }
 
             $results[] = [
-                'firstname' => $contact['GivenName'],
-                'lastname'  => $contact['Surname'],
+                'firstname' => $contact['givenName'],
+                'lastname'  => $contact['surname'],
                 'name'      => trim($name),
-                'email'     => $contact['EmailAddresses'][0]['Address']
+                'email'     => $contact['emailAddresses'][0]['address']
             ];
         }
 
@@ -702,7 +701,7 @@ class OutlookCalendar
         $headers = [
             'User-Agent: php-tutorial/1.0',
             // Sending a User-Agent header is a best practice.
-            'Authorization: Bearer ' . $access_token,
+            'Authorization: Bearer ' . $access_token.'',
             // Always need our auth token!
             'Accept: application/json',
             // Always accept JSON response.
@@ -722,6 +721,11 @@ class OutlookCalendar
             case 'POST':
                 // Add a Content-Type header (IMPORTANT!)
                 $headers[] = 'Content-Type: application/json';
+                if ($payload !== null) {
+                    $payload = json_decode($payload, true);
+                    $payload['resource'] = 'https://graph.microsoft.com/';
+                    $payload = json_encode($payload);
+                }
                 curl_setopt($curl, CURLOPT_POST, true);
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
                 break;
@@ -741,7 +745,6 @@ class OutlookCalendar
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         $response = curl_exec($curl);
-
         $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
         if ($httpCode >= 400) {
