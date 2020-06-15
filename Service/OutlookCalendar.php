@@ -701,7 +701,7 @@ class OutlookCalendar
         $headers = [
             'User-Agent: php-tutorial/1.0',
             // Sending a User-Agent header is a best practice.
-            'Authorization: Bearer ' . $access_token.'',
+            'Authorization: Bearer ' . $access_token,
             // Always need our auth token!
             'Accept: application/json',
             // Always accept JSON response.
@@ -721,11 +721,6 @@ class OutlookCalendar
             case 'POST':
                 // Add a Content-Type header (IMPORTANT!)
                 $headers[] = 'Content-Type: application/json';
-                if ($payload !== null) {
-                    $payload = json_decode($payload, true);
-                    $payload['resource'] = 'https://graph.microsoft.com/';
-                    $payload = json_encode($payload);
-                }
                 curl_setopt($curl, CURLOPT_POST, true);
                 curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
                 break;
@@ -741,7 +736,6 @@ class OutlookCalendar
             default:
                 throw new \RuntimeException('INVALID METHOD: ' . $method);
         }
-
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         $response = curl_exec($curl);
