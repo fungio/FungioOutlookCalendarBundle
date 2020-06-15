@@ -60,7 +60,7 @@ class OutlookCalendar
      */
     public function __construct()
     {
-        $this->scopes = implode(' ', ['openid', 'https://outlook.office.com/calendars.readwrite', 'offline_access']);
+        $this->scopes = implode(' ', ['openid', 'https://graph.microsoft.com/Calendars.ReadWrite', 'offline_access']);
     }
 
     /**
@@ -88,7 +88,15 @@ class OutlookCalendar
      */
     public function addScopeContact()
     {
-        $this->addScope('https://outlook.office.com/contacts.read');
+        $this->addScope('https://graph.microsoft.com/Contacts.Read');
+    }
+
+    /**
+     * Remove contact scope
+     */
+    public function removeScopeContact()
+    {
+        $this->removeScope('https://graph.microsoft.com/Contacts.Read');
     }
 
     /**
@@ -96,7 +104,7 @@ class OutlookCalendar
      */
     public function addScopeCalendar()
     {
-        $this->addScope('https://outlook.office.com/calendars.readwrite');
+        $this->addScope('https://graph.microsoft.com/Calendars.ReadWrite');
     }
 
     /**
@@ -104,7 +112,7 @@ class OutlookCalendar
      */
     public function removeScopeCalendar()
     {
-        $this->removeScope('https://outlook.office.com/calendars.readwrite');
+        $this->removeScope('https://graph.microsoft.com/Calendars.ReadWrite');
     }
 
     /**
@@ -116,11 +124,27 @@ class OutlookCalendar
     }
 
     /**
+     * Remove userinfo scope
+     */
+    public function removeScopeUserInfos()
+    {
+//        $this->removeScope('user.readbasic.all');
+    }
+
+    /**
      * Remove offline_access scope
      */
     public function removeScopeOfflineAccess()
     {
-        $this->removeScope('https://outlook.office.com/offline_access');
+        $this->removeScope('offline_access');
+    }
+
+    /**
+     * Add offline_access scope
+     */
+    public function addScopeOfflineAccess()
+    {
+        $this->removeScope('offline_access');
     }
 
     /**
