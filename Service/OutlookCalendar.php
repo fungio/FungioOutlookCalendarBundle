@@ -66,6 +66,7 @@ class OutlookCalendar
             ' ', [
                 'openid',
                 'https://graph.microsoft.com/Calendars.ReadWrite',
+                'https://graph.microsoft.com/User.ReadBasic.All',
                 'offline_access'
             ]
         );
@@ -128,7 +129,7 @@ class OutlookCalendar
      */
     public function addScopeUserInfos()
     {
-//        $this->addScope('user.readbasic.all');
+        $this->addScope('https://graph.microsoft.com/User.ReadBasic.All');
     }
 
     /**
@@ -136,7 +137,7 @@ class OutlookCalendar
      */
     public function removeScopeUserInfos()
     {
-//        $this->removeScope('user.readbasic.all');
+        $this->removeScope('https://graph.microsoft.com/User.ReadBasic.All');
     }
 
     /**
