@@ -231,7 +231,7 @@ class OutlookCalendar
      */
     public function getLoginUrl($redirectUri)
     {
-        return $this->authority . sprintf($this->tenantId . '/' . $this->authorizeUrl, $this->clientId, urlencode($redirectUri), $this->base64UrlEncode(json_encode($this->parameters)), urlencode($this->scopes));
+        return $this->authority . sprintf('/' . $this->tenantId . $this->authorizeUrl, $this->clientId, urlencode($redirectUri), $this->base64UrlEncode(json_encode($this->parameters)), urlencode($this->scopes));
     }
 
     /**
@@ -243,7 +243,7 @@ class OutlookCalendar
      */
     public function getLogoutUrl($redirectUri)
     {
-        return $this->authority . sprintf($this->tenantId . '/' . $this->logoutUrl, urlencode($redirectUri));
+        return $this->authority . sprintf('/' . $this->tenantId . $this->logoutUrl, urlencode($redirectUri));
     }
 
     /**
@@ -271,7 +271,7 @@ class OutlookCalendar
         // formatted as Azure expects.
         $token_request_body = http_build_query($token_request_data);
 
-        $curl = curl_init($this->authority . $this->tenantId . '/' . $this->tokenUrl);
+        $curl = curl_init($this->authority . '/' . $this->tenantId . $this->tokenUrl);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_POST, true);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $token_request_body);
@@ -334,7 +334,7 @@ class OutlookCalendar
 
         $token_request_body = http_build_query($token_request_data);
 
-        $curl = curl_init($this->authority . $this->tenantId . '/' . $this->tokenUrl);
+        $curl = curl_init($this->authority . '/' . $this->tenantId . $this->tokenUrl);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_POST, true);
         curl_setopt($curl, CURLOPT_POSTFIELDS, $token_request_body);
